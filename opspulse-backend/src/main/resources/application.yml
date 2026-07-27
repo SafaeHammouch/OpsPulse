@@ -1,0 +1,23 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: opspulse-backend
+  datasource:
+    url: ${OPSPULSE_DB_URL:jdbc:postgresql://localhost:5432/opspulse}
+    username: ${OPSPULSE_DB_USERNAME:opspulse}
+    password: ${OPSPULSE_DB_PASSWORD:opspulse}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
