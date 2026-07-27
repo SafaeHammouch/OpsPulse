@@ -6,6 +6,7 @@ import com.opspulse.backend.api.ServiceNotFoundException;
 import com.opspulse.backend.service.MonitoredService;
 import com.opspulse.backend.service.MonitoredServiceRepository;
 import java.time.Duration;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -20,15 +21,18 @@ public class HealthCheckService {
     private final HealthCheckResultRepository healthCheckResultRepository;
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
+    private final long slowResponseThresholdMs;
 
     public HealthCheckService(MonitoredServiceRepository monitoredServiceRepository,
                               HealthCheckResultRepository healthCheckResultRepository,
                               RestClient.Builder restClientBuilder,
-                              ObjectMapper objectMapper) {
+                              ObjectMapper objectMapper,
+                              @Value("${opspulse.health.slow-response-threshold-ms:1000}") long slowResponseThresholdMs) {
         this.monitoredServiceRepository = monitoredServiceRepository;
         this.healthCheckResultRepository = healthCheckResultRepository;
         this.restClient = restClientBuilder.build();
         this.objectMapper = objectMapper;
+        this.slowResponseThresholdMs = slowResponseThresholdMs;
     }
 
     public HealthCheckResult check(Long serviceId) {
@@ -60,6 +64,10 @@ public class HealthCheckService {
         }
 
         long responseTimeMs = Duration.ofNanos(System.nanoTime() - startedAt).toMillis();
+        if (status == HealthStatus.UP && responseTimeMs >= slowResponseThresholdMs) {
+            status = HealthStatus.SLOW;
+            errorMessage = "Response time exceeded the " + slowResponseThresholdMs + " ms slow threshold";
+        }
         return healthCheckResultRepository.save(
                 new HealthCheckResult(service, status, httpStatus, responseTimeMs, errorMessage));
     }

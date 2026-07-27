@@ -8,6 +8,12 @@ This is the first OpsPulse application. It stores services to monitor, calls the
 - `GET /api/services` — list registered services.
 - `POST /api/services/{id}/check` — perform and save one health check.
 - `GET /api/services/{id}/health-results` — view saved checks, newest first.
+- `POST /api/deployments` — record a deployment.
+- `GET /api/deployments` — list deployments (optionally add `?serviceId=1`).
+
+Health checks run automatically for every enabled service once its `checkIntervalSeconds`
+has elapsed. A successful check taking 1,000 ms or more is stored as `SLOW`; change
+`opspulse.health.slow-response-threshold-ms` in `application.yml` to adjust this.
 
 The backend runs on port `8080`. The demo Payment Service runs separately on port `8081`.
 
@@ -59,6 +65,14 @@ Ask OpsPulse to check it:
 curl -X POST http://localhost:8080/api/services/1/check
 ```
 
+Record the deployment that is being monitored:
+
+```bash
+curl -X POST http://localhost:8080/api/deployments \
+  -H 'Content-Type: application/json' \
+  -d '{"serviceId":1,"version":"2.1.0","environment":"staging","status":"COMPLETED"}'
+```
+
 Set the demo service down and check it again:
 
 ```bash
@@ -71,4 +85,4 @@ The second result should have `"status":"DOWN"`. If the Payment Service is stopp
 
 ## Not included yet
 
-Automatic scheduling and incident creation intentionally come after the manual workflow is verified.
+Risk scoring and incident creation intentionally come after the health-check and deployment workflows are verified.

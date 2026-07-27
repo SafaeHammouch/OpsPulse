@@ -21,3 +21,10 @@ management:
   endpoint:
     health:
       show-details: always
+
+opspulse:
+  health:
+    # A successful response at or above this duration is recorded as SLOW.
+    slow-response-threshold-ms: 1000
+    # How often OpsPulse looks for services whose individual check interval is due.
+    scheduler-delay-ms: 5000
